@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Parking Map</title>
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <style>
+    #map {
+      height: 90vh;
+      width: 100%;
+    }
+
+    .custom-parking-marker {
+      background: none;
+      border: none;
+    }
+
+    .main {
+      display: flex;
+      gap: 4%;
+    }
+
+    .pakingsInfo {
+      width: 30%;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 10px;
+      background: #f9f9f9;
+      border-right: 1px solid #ddd;
+    }
+
+    .parking-card {
+      background: #fff;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 12px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+
+    .parking-card h4 {
+      margin: 0 0 6px;
+    }
+
+    .parking-card p {
+      margin: 4px 0;
+      font-size: 14px;
+    }
+
+    .parking-card button {
+      margin-top: 8px;
+      padding: 6px 10px;
+      border: none;
+      border-radius: 4px;
+      background: #1976D2;
+      color: #fff;
+      cursor: pointer;
+    }
+  </style>
+</head>
+
+<body>
+
+<h3>Parking near: <%= area %></h3>
+
+<div class="main">
+  <div class="pakingsInfo"></div>
+  <div id="map"></div>
+</div>
+
+<script>
+/* ================= GLOBALS ================= */
+let map;
+let parkingMarkers = {};
+
+/* ================= ICON ================= */
+const parkingIcon = L.divIcon({
+  className: 'custom-parking-marker',
+  html: `
+    <svg width="36" height="36" viewBox="0 0 36 36">
+      <circle cx="18" cy="18" r="16" fill="#1976D2" stroke="#fff" stroke-width="3"/>
+      <text x="18" y="23" text-anchor="middle" font-size="18" fill="#fff" font-weight="bold">P</text>
+    </svg>
+  `,
+  iconSize: [36, 36],
+  iconAnchor: [18, 36],
+  popupAnchor: [0, -36]
+});
+
+/* ================= LOAD ================= */
+window.onload = function () {
+  const areaName = "<%= area %>";
+
+  fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${areaName}`)
+    .then(res => res.json())
+    .then(data => {
+      if (!data.length) {
+        alert("Area not found");
+        return;
+      }
+
+      initMap(parseFloat(data[0].lat), parseFloat(data[0].lon));
+    });
+};
+
+/* ================= MAP ================= */
+function initMap(lat, lon) {
+  map = L.map("map").setView([lat, lon], 13);
+
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: "© OpenStreetMap contributors"
+  }).addTo(map);
+
+  L.marker([lat, lon])
+    .addTo(map)
+    .bindPopup("Selected Area")
+    .openPopup();
+
+  loadParking(lat, lon);
+}
+
+/* ================= PARKING ================= */
+function loadParking(lat, lon) {
+  fetch(`/parking?lat=${lat}&lon=${lon}`)
+    .then(res => res.json())
+    .then(data => {
+
+      const infoDiv = document.querySelector(".pakingsInfo");
+      infoDiv.innerHTML = "";
+      parkingMarkers = {};
+
+      if (!data.length) {
+        infoDiv.innerHTML = "<p>No parking found near this area.</p>";
+        return;
+      }
+
+      const bounds = [];
+
+      data.forEach((p, index) => {
+
+        /* Marker with popup */
+        const marker = L.marker([p.latitude, p.longitude], { icon: parkingIcon })
+          .addTo(map)
+         .bindPopup(`
+  <b>${p.name}</b><br>
+  Total Slots: ${p.totalSlots}<br>
+  Available Slots: ${p.availableSlots}<br><br>
+  <a 
+    href="https://www.google.com/maps/dir/?api=1&destination=${p.latitude},${p.longitude}" 
+    target="_blank"
+    style="color:#1976D2;font-weight:600;text-decoration:none;"
+  >
+    🚗 Get Directions
+  </a>
+`);
+
+
+        parkingMarkers[index] = marker;
+        bounds.push([p.latitude, p.longitude]);
+
+        /* Info card */
+        const card = document.createElement("div");
+        card.className = "parking-card";
+    card.innerHTML = `
+  <h4>${p.name}</h4>
+  <p><strong>Total Slots:</strong> ${p.totalSlots}</p>
+  <p><strong>Available:</strong> ${p.availableSlots}</p>
+
+  <button onclick="focusParking(${index})">
+    View on Map
+  </button>
+
+  <br><br>
+
+  <a
+    href="https://www.google.com/maps/dir/?api=1&destination=${p.latitude},${p.longitude}"
+    target="_blank"
+    style="text-decoration:none;color:#1976D2;font-weight:600;"
+  >
+    🚗 Get Directions
+  </a>
+`;
+
+
+        infoDiv.appendChild(card);
+      });
+
+      map.fitBounds(bounds, { padding: [40, 40] });
+    });
+}
+
+/* ================= FOCUS ================= */
+function focusParking(index) {
+  const marker = parkingMarkers[index];
+  if (marker) {
+    map.setView(marker.getLatLng(), 17);
+    marker.openPopup();
+  }
+}
+</script>
+
+</body>
+</html>

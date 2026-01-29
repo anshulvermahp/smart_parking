@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Add Parking Area | ParkSpot</title>
+
+  <!-- Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: 'Inter', sans-serif;
+    }
+
+    body {
+      margin: 0;
+      background: #f5f5f5;
+    }
+
+    /* ===== NAVBAR ===== */
+    .navbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 40px;
+      background: #fff;
+      border-bottom: 1px solid #eee;
+    }
+
+    .logo {
+      font-size: 22px;
+      font-weight: 700;
+      color: #f4b400;
+    }
+
+    .nav-right a {
+      margin-left: 20px;
+      text-decoration: none;
+      color: #333;
+      font-weight: 500;
+    }
+
+    .login-btn {
+      background: #f4b400;
+      padding: 8px 16px;
+      border-radius: 6px;
+      color: #000;
+      font-weight: 600;
+    }
+
+    /* ===== HERO ===== */
+    .hero {
+      height: calc(100vh - 70px);
+      background: url("https://images.unsplash.com/photo-1506521781263-d8422e82f27a")
+        center / cover no-repeat;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* ===== CARD ===== */
+    .card {
+      background: #fff;
+      width: 420px;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+    }
+
+    .card h2 {
+      margin-bottom: 20px;
+      font-size: 24px;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+    }
+
+    .submit-btn {
+      width: 100%;
+      padding: 12px;
+      background: #f4b400;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .submit-btn:hover {
+      background: #e0a800;
+    }
+
+    .hint {
+      font-size: 12px;
+      color: #666;
+      margin-top: 4px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- NAVBAR -->
+  <div class="navbar">
+    <div class="logo">📍 ParkSpot</div>
+    <div class="nav-right">
+      <a href="#">Register</a>
+      <a href="#">Login</a>
+      <a href="#">About us</a>
+      <a class="login-btn" href="#">Log in</a>
+    </div>
+  </div>
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="card">
+
+      <h2>Add Parking Area</h2>
+
+    <form action="/admin/add-parking" method="POST" enctype="multipart/form-data">
+
+  <div class="form-group">
+    <label>Parking Name</label>
+    <input type="text" name="name" required>
+  </div>
+
+  <div class="form-group">
+    <label>Google Maps Link</label>
+    <input
+      type="text"
+      name="mapLink"
+      placeholder="Paste full Google Maps link"
+      required
+    >
+    <small>Latitude & longitude will be extracted automatically</small>
+  </div>
+
+  <div class="form-group">
+    <label>Total Slots</label>
+    <input type="number" name="totalSlots" required>
+  </div>
+
+  <div class="form-group">
+    <label>Available Slots</label>
+    <input type="number" name="availableSlots" required>
+  </div>
+  
+  <div class="form-group">
+    <label>Parking Images</label>
+    <input type="file" name="images" multiple accept="image/*">
+    <small>You can upload multiple images</small>
+  </div>
+  <button type="submit">Add Parking</button>
+
+</form>
+
+
+    </div>
+  </div>
+
+</body>
+</html>

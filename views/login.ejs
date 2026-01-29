@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Login | ParkSpot</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    * { box-sizing: border-box; font-family: 'Inter', sans-serif; }
+
+    body { margin: 0; background: #f5f5f5; }
+
+    /* NAVBAR */
+    .navbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 40px;
+      background: #fff;
+      border-bottom: 1px solid #eee;
+    }
+
+    .logo { font-size: 22px; font-weight: 700; color: #f4b400; }
+
+    .nav-right a {
+      margin-left: 20px;
+      text-decoration: none;
+      color: #333;
+      font-weight: 500;
+    }
+
+    .login-btn {
+      background: #f4b400;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-weight: 600;
+      color: #000;
+    }
+
+    /* HERO */
+    .hero {
+      height: calc(100vh - 70px);
+      background: url("https://images.unsplash.com/photo-1506521781263-d8422e82f27a")
+        center / cover no-repeat;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* CARD */
+    .card {
+      background: #fff;
+      width: 380px;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+    }
+
+    h2 { margin-bottom: 20px; }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px 12px;
+      margin-bottom: 14px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      background: #f4b400;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    button:hover { background: #e0a800; }
+
+    .small {
+      margin-top: 14px;
+      font-size: 14px;
+      text-align: center;
+    }
+
+    .small a {
+      color: #f4b400;
+      text-decoration: none;
+      font-weight: 600;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- NAVBAR -->
+  <div class="navbar">
+    <div class="logo">📍 ParkSpot</div>
+    <div class="nav-right">
+      <a href="/register">Register</a>
+      <a class="login-btn" href="/login">Login</a>
+    </div>
+  </div>
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="card">
+
+      <h2>Login</h2>
+
+      <form action="/login" method="post">
+        <label>Email</label>
+        <input type="text" name="email" required />
+
+        <label>Password</label>
+        <input type="password" name="password" required />
+
+        <button type="submit">Sign In</button>
+      </form>
+
+      <p class="small">
+        Don’t have an account?
+        <a href="/register">Register</a>
+      </p>
+
+    </div>
+  </div>
+
+</body>
+</html>
