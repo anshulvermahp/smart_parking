@@ -81,7 +81,8 @@
                                     <%= user.email %>
                                 </p>
                                 <div class="d-flex gap-2 align-items-center">
-                                    <a href="/profile/edit-profile" class="btn btn-primary-dark flex-grow-1">Edit profile</a>
+                                    <a href="/profile/edit-profile" class="btn btn-primary-dark flex-grow-1">Edit
+                                        profile</a>
                                     <% if (user.owner) { %>
                                         <a href="/admin/add-parking" class="btn btn-outline-dark">Add slot</a>
                                         <% } else { %>
@@ -110,20 +111,34 @@
                         <h5 style="margin:0;">Recent bookings</h5>
                         <div class="sticker">Recent</div>
                     </div>
-                    <% if (user.bookings && user.bookings.length) { %>
+                    <% if (bookings && bookings.length) { %>
                         <ul class="list-group list-group-flush">
-                            <% user.bookings.forEach(function(b){ %>
+                            <% bookings.forEach(function(b){ %>
                                 <li class="list-group-item d-flex justify-content-between align-items-center">
                                     <div>
-                                        <div style="font-weight:700;">
-                                            <%= b.parkingName || 'Booking' %>
+                                        <div>
+                                            <h5 style="font-weight:700;">
+                                                <%=b.parkingName || 'Parking' %>
+                                            </h5>
+                                            <%= b.parkingId || 'null' %>
                                         </div>
-                                        <div class="muted small">
-                                            <%= b.date || b.slot || '' %>
+                                        <div class=" small">
+                                            <%= b.date || b.slots || '' %> | <%= b.time || '' %>
                                         </div>
                                     </div>
-                                    <div class="muted small">
-                                        <%= b.status || 'Confirmed' %>
+                                    <div>
+                                        <%=b.status %>
+                                    </div>
+                                    <div>
+                                        <%= b.slots %>
+                                    </div>
+                                    <div>
+                                        <span>₹</span>
+                                        <%= b.amount %>
+                                    </div>
+                                    <div>
+                                        <%= b.paymentStatus %>
+                                            trans_id: <%= b.paymentId %>
                                     </div>
                                 </li>
                                 <% }); %>

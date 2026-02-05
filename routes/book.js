@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Parking = require('../models/parking');
+const Booking = require('../models/booking');
 const { requireRole } = require('../middleware/auth');
 
 // GET booking page for a parking lot
@@ -19,7 +20,7 @@ router.get('/', requireRole('user'), async (req, res) => {
 
 // PayU integration
 const crypto = require('crypto');
-const payuConfig = require('../config/payu');
+// const payuConfig = require('../config/payu');
 
 router.post('/', requireRole('user'), async (req, res) => {
   const { parkingId, slots, date, time } = req.body;
@@ -30,6 +31,28 @@ router.post('/', requireRole('user'), async (req, res) => {
 
     // Calculate amount (for demo, assume 50 per slot)
     const amount = parseInt(slots) * parking.pricing.hourly;
+
+    // Direct booking without Payment Gateway
+    const booking = new Booking({
+      parkingId: parking._id,
+      slots: slots,
+      date: date,
+      time: time,
+      user: req.user.id,
+      amount: amount,
+      paymentId: 'PAY-' + crypto.randomBytes(8).toString('hex'),
+      paymentStatus: 'success',
+    });
+
+    await booking.save();
+
+    // Update available slots
+    await Parking.findByIdAndUpdate(parkingId, { $inc: { availableSlots: -parseInt(slots) } });
+
+    // Render themed booking success page
+    res.render('booking-submitted', { booking });
+
+    /* PayU Integration Commented Out
     const txnid = 'txn' + Date.now();
     // Use only the parking name as productinfo (plain string, no JSON, no curly braces)
     const productinfo = String(parking.name || 'Parking Slot').trim();
@@ -90,13 +113,16 @@ router.post('/', requireRole('user'), async (req, res) => {
       <script>document.getElementById('payuForm').submit();</script>
       </body></html>
     `);
+    */
   } catch (err) {
+    console.error(err);
     res.status(500).send('Server error');
   }
 });
 
 
 
+/*
 // Save booking after payment success
 const Booking = require('../models/booking');
 
@@ -136,5 +162,6 @@ router.post('/success', async (req, res) => {
 router.post('/failure', (req, res) => {
   res.send('<h2>Payment Failed</h2><p>Your payment was not successful. Please try again.</p>');
 });
+*/
 
 module.exports = router;

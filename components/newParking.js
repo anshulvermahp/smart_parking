@@ -1,6 +1,7 @@
 
 
 const Parking = require("../models/parking");
+const Owners = require("../models/owner");
 
 // Helper function to extract lat/lon
 function extractLatLon(mapLink) {
@@ -18,7 +19,7 @@ function extractLatLon(mapLink) {
 
 function newParkingPage(req, res) {
 
-  res.render("newParking")
+  res.render("newParking", { id: req.user.id || req.user._id })
 
 }
 
@@ -52,6 +53,16 @@ async function addArea(req, res) {
     const match = mapLink.match(regex);
     if (!match) {
       return res.send("Invalid Google Maps link");
+    }
+
+    // Resolve owner from logged-in user
+    // The Parking 'owner' field references 'ownersData', so we must find the owner profile by email.
+    if (!req.user || !req.user.email) {
+      return res.status(401).send("Authentication required");
+    }
+    const ownerDoc = await Owners.findOne({ email: req.user.email });
+    if (!ownerDoc) {
+      return res.status(403).send("You must have a registered Owner profile to add parking.");
     }
 
     // Handle uploaded images (ImageKit URLs)
@@ -114,8 +125,8 @@ async function addArea(req, res) {
         close: operationalClose
       },
       amenities: amenitiesArr,
-      security
-      // owner: req.user._id // If you have authentication
+      security,
+      owner: ownerDoc._id
     });
 
     // Render the parking-added success page

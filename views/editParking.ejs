@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Edit Parking | ParkSpot</title>
+    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Google Sans', Arial, sans-serif;
+        }
+
+        body {
+            margin: 0;
+            background: #fff;
+            min-height: 100vh;
+        }
+
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 32px;
+            background: #fff;
+            border-bottom: 1px solid #e5e5e5;
+        }
+
+        .logo {
+            font-size: 22px;
+            font-weight: 700;
+            color: #000;
+        }
+
+        .page {
+            padding: 24px 32px;
+        }
+
+        .card {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 24px 28px;
+            border-radius: 18px;
+        }
+
+        .section {
+            margin-bottom: 22px;
+        }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 14px 18px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group.full {
+            grid-column: span 3;
+        }
+
+        .form-group label {
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .form-group input {
+            padding: 10px 12px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            font-size: 14px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            gap: 20px;
+            font-size: 14px;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 14px;
+            background: #000;
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .submit-btn:hover {
+            background: #111;
+        }
+
+        .current-images {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+
+        .img-preview {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="navbar">
+        <div class="logo">📍 ParkSpot</div>
+        <div><a href="/dashboard/<%= parking._id %>" style="color: #000; text-decoration: none; font-weight: 500;">Back
+                to Details</a></div>
+    </div>
+
+    <div class="page">
+        <div class="card">
+            <h2>Edit Parking Area</h2>
+            <form action="/dashboard/<%= parking._id %>/edit" method="POST" enctype="multipart/form-data">
+
+                <!-- BASIC -->
+                <div class="section">
+                    <div class="section-title">Basic Information</div>
+                    <div class="grid">
+                        <div class="form-group full">
+                            <label>Parking Name</label>
+                            <input type="text" name="name" value="<%= parking.name %>" required>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ADDRESS -->
+                <div class="section">
+                    <div class="section-title">Address</div>
+                    <div class="grid">
+                        <div class="form-group">
+                            <label>City</label>
+                            <input type="text" name="city" value="<%= parking.address.city %>" required>
+                        </div>
+                        <div class="form-group">
+                            <label>State</label>
+                            <input type="text" name="state" value="<%= parking.address.state %>" required>
+                        </div>
+                        <div class="form-group">
+                            <label>ZIP Code</label>
+                            <input type="text" name="zip" value="<%= parking.address.zip %>" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Country</label>
+                            <input type="text" name="country" value="<%= parking.address.country %>" required>
+                        </div>
+                        <div class="form-group full">
+                            <label>Street Address</label>
+                            <input type="text" name="street" value="<%= parking.address.street %>" required>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- LOCATION -->
+                <div class="section">
+                    <div class="section-title">Location</div>
+                    <div class="grid">
+                        <div class="form-group full">
+                            <label>Google Maps Link</label>
+                            <input type="text" name="mapLink" value="<%= parking.mapLink %>" required>
+                            <small>Latitude & longitude will be updated automatically</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CAPACITY -->
+                <div class="section">
+                    <div class="section-title">Capacity</div>
+                    <div class="grid">
+                        <div class="form-group">
+                            <label>Total Slots</label>
+                            <input type="number" name="totalSlots" value="<%= parking.totalSlots %>" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Available Slots</label>
+                            <input type="number" name="availableSlots" value="<%= parking.availableSlots %>" required>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PRICING -->
+                <div class="section">
+                    <div class="section-title">Pricing</div>
+                    <div class="grid">
+                        <div class="form-group">
+                            <label>Hourly</label>
+                            <input type="number" name="pricingHourly" step="0.01" value="<%= parking.pricing.hourly %>"
+                                required>
+                        </div>
+                        <div class="form-group">
+                            <label>Daily</label>
+                            <input type="number" name="pricingDaily" step="0.01" value="<%= parking.pricing.daily %>">
+                        </div>
+                        <div class="form-group">
+                            <label>Monthly</label>
+                            <input type="number" name="pricingMonthly" step="0.01"
+                                value="<%= parking.pricing.monthly %>">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- OPERATIONS -->
+                <div class="section">
+                    <div class="section-title">Operations</div>
+                    <div class="grid">
+                        <div class="form-group">
+                            <label>Open Time</label>
+                            <input type="time" name="operationalOpen" value="<%= parking.operationalHours.open %>"
+                                required>
+                        </div>
+                        <div class="form-group">
+                            <label>Close Time</label>
+                            <input type="time" name="operationalClose" value="<%= parking.operationalHours.close %>"
+                                required>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECURITY & IMAGES -->
+                <div class="section">
+                    <div class="section-title">Security & Media</div>
+                    <div class="grid">
+                        <div class="form-group full">
+                            <label>Security</label>
+                            <div class="checkbox-group">
+                                <label><input type="checkbox" name="securityCctv" <%=parking.security &&
+                                        parking.security.cctv ? 'checked' : '' %>> CCTV</label>
+                                <label><input type="checkbox" name="securityGuard" <%=parking.security &&
+                                        parking.security.guard ? 'checked' : '' %>> Guard</label>
+                                <label><input type="checkbox" name="securityGated" <%=parking.security &&
+                                        parking.security.gated ? 'checked' : '' %>> Gated</label>
+                            </div>
+                        </div>
+
+                        <div class="form-group full">
+                            <label>Current Images (Select Thumbnail | Check to Delete)</label>
+                            <% if (parking.images && parking.images.length> 0) { %>
+                                <div class="current-images">
+                                    <% parking.images.forEach((img, index)=> { %>
+                                        <div class="img-wrapper"
+                                            style="position: relative; width: 120px; text-align: center;">
+                                            <img src="<%= img %>" class="img-preview"
+                                                style="width:100%; height:100px; object-fit:cover; border-radius:8px; display:block; margin-bottom:5px;" />
+
+                                            <div
+                                                style="display: flex; gap: 8px; justify-content: center; font-size: 12px;">
+                                                <label style="cursor: pointer;">
+                                                    <input type="radio" name="thumbnail" value="<%= img %>"
+                                                        <%=(parking.thumbnail===img || (!parking.thumbnail &&
+                                                        index===0)) ? 'checked' : '' %>> Main
+                                                </label>
+                                                <label style="color: red; cursor: pointer;">
+                                                    <input type="checkbox" name="deleteImages" value="<%= img %>"> Del
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <% }) %>
+                                </div>
+                                <% } else { %>
+                                    <p class="text-muted"><small>No images uploaded</small></p>
+                                    <% } %>
+                        </div>
+
+                        <div class="form-group full">
+                            <label>Upload New Images (Appends to existing)</label>
+                            <input type="file" name="images" multiple>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="submit-btn" type="submit">Update Parking</button>
+
+            </form>
+        </div>
+    </div>
+</body>
+
+</html>

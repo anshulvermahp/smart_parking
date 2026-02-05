@@ -16,6 +16,7 @@ const parkingSchema = new mongoose.Schema({
   availableSlots: { type: Number, required: true },
   mapLink: String,
   images: [String],
+  thumbnail: { type: String, default: "" },
   contact: {
     phone: String,
     email: String
@@ -35,7 +36,7 @@ const parkingSchema = new mongoose.Schema({
     guard: { type: Boolean, default: false },
     gated: { type: Boolean, default: false }
   },
-  owner: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  owner: { type: mongoose.Schema.Types.ObjectId, ref: 'ownersData', required: true },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });
