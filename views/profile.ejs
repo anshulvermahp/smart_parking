@@ -40,10 +40,28 @@
 
         /* Profile Specifics */
         .profile-header-bg {
-            height: 200px;
-            background: linear-gradient(135deg, #212529 0%, #434343 100%);
+            height: 140px;
+            background: #f8f9fa; /* match page background instead of dark gradient */
             border-radius: 0 0 20px 20px;
-            margin-bottom: -60px;
+            margin-bottom: -60px; /* keep overlap for profile card */
+        }
+
+        /* Make navbar controls consistent with outline button theme */
+        .navbar .nav-link,
+        .navbar .btn {
+            padding: .45rem 1rem;
+            border-radius: 999px;
+            font-weight: 600;
+        }
+
+        .navbar .nav-link {
+            color: #555 !important;
+            background: transparent;
+        }
+
+        .navbar .nav-link:hover {
+            color: #000 !important;
+            text-decoration: none;
         }
 
         .profile-card {
