@@ -11,7 +11,7 @@ async function handleUserProfilePage(req, res) {
     try {
         const user = await users.findById(userId).lean();
         if (!user) {
-            return res.status(404).send("User not found");
+            return res.redirect("/login");
         }
 
         // specific check: if user is marked as owner, verify they exist in owners collection
@@ -26,7 +26,7 @@ async function handleUserProfilePage(req, res) {
         res.render("profile", { user, bookings });
     } catch (error) {
         console.error("Error fetching user profile:", error);
-        res.status(500).send("Server error");
+        res.redirect("/login");
     }
 }
 

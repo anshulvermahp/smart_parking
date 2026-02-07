@@ -52,17 +52,17 @@ async function addArea(req, res) {
     const regex = /@(-?\d+\.\d+),(-?\d+\.\d+)/;
     const match = mapLink.match(regex);
     if (!match) {
-      return res.send("Invalid Google Maps link");
+      return res.render("newParking", { id: req.user.id || req.user._id, error: "Invalid Google Maps link" });
     }
 
     // Resolve owner from logged-in user
     // The Parking 'owner' field references 'ownersData', so we must find the owner profile by email.
     if (!req.user || !req.user.email) {
-      return res.status(401).send("Authentication required");
+      return res.status(401).render("login", { error: "Authentication required" });
     }
     const ownerDoc = await Owners.findOne({ email: req.user.email });
     if (!ownerDoc) {
-      return res.status(403).send("You must have a registered Owner profile to add parking.");
+      return res.status(403).render("owner", { error: "You must have a registered Owner profile to add parking." });
     }
 
     // Handle uploaded images (ImageKit URLs)
@@ -134,7 +134,7 @@ async function addArea(req, res) {
   } catch (err) {
     let errorMsg = err && err.message ? err.message : String(err);
     console.error("Error adding parking area:", errorMsg, err && err.stack ? err.stack : "");
-    res.status(500).send("An error occurred: " + errorMsg);
+    res.status(500).render("newParking", { id: req.user.id || req.user._id, error: "An error occurred: " + errorMsg });
   }
 }
 

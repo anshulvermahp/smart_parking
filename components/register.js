@@ -1,14 +1,14 @@
-const users  = require("../models/register")
+const users = require("../models/register")
 const imagekit = require("../config/imagekit")
-
+const bycrypt = require("bcrypt")
 
 
 async function newUser(req, res) {
 
 
-    let data = req.body;
+  let data = req.body;
   if (!data) {
-    return res.status(400).send("Invalid Input")
+    return res.status(400).render('register', { error: "Invalid Input" });
   }
 
   // Basic validation
@@ -26,14 +26,14 @@ async function newUser(req, res) {
   if (phoneNumber && phoneDigits.length < 7) errors.push('Phone number seems invalid');
 
   if (errors.length) {
-    return res.status(400).send({ errors });
+    return res.status(400).render('register', { error: errors.join(', ') });
   }
 
   // sanitize back into data
   data.username = username;
   data.email = email;
-  data.password = password;
-  data.phoneNumber = phoneNumber;
+  data.password = await bycrypt.hash(password, 10);
+  data.phoneNumber = data.fullPhoneNumber || phoneNumber;
 
   // proceed
   try {
@@ -57,7 +57,7 @@ async function newUser(req, res) {
           console.error('Image upload failed:', err);
           // If upload failed due to file size or type, return clear error
           if (err.message && err.message.includes('File too large')) {
-            return res.status(400).send('Profile image too large (max 2MB)');
+            return res.status(400).render('register', { error: 'Profile image too large (max 2MB)' });
           }
         }
       }
@@ -76,40 +76,40 @@ async function newUser(req, res) {
       // Handle Mongo duplicate key error
       if (err && err.code === 11000) {
         const field = err.keyValue ? Object.keys(err.keyValue)[0] : 'field'
-        return res.status(409).send(`${field} already exists`)
+        return res.status(409).render('register', { error: `${field} already exists` });
       }
 
       // Generic server error
       console.error('Registration error:', err)
-      return res.status(500).send('Server error during registration')
+      return res.status(500).render('register', { error: 'Server error during registration' });
     }
   }
- 
-  
+
+
 
   catch (error) {
     console.error("Unexpected error during registration:", error)
-    return res.status(500).send("Unexpected server error")
+    return res.status(500).render('register', { error: "Unexpected server error" });
   }
 
-    
-    
+
+
 }
 
-async function registerUserPage(req,res) {
+async function registerUserPage(req, res) {
 
-    res.render("register")
-    
+  res.render("register")
+
 }
-async function usersapi(req , res) {
-    let data = await users.find()
-    return res.json(data)
-}  
-  
+async function usersapi(req, res) {
+  let data = await users.find()
+  return res.json(data)
+}
+
 
 module.exports =
 {
-     newUser,
-     registerUserPage,
-     usersapi
+  newUser,
+  registerUserPage,
+  usersapi
 }

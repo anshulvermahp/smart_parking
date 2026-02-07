@@ -18,9 +18,10 @@ router.get('/', requireRole('user'), async (req, res) => {
 });
 
 
-// PayU integration
+// PayU integration (Commented out for direct booking)
+/*
 const crypto = require('crypto');
-// const payuConfig = require('../config/payu');
+const payuConfig = require('../config/payu');
 
 router.post('/', requireRole('user'), async (req, res) => {
   const { parkingId, slots, date, time } = req.body;
@@ -32,47 +33,25 @@ router.post('/', requireRole('user'), async (req, res) => {
     // Calculate amount (for demo, assume 50 per slot)
     const amount = parseInt(slots) * parking.pricing.hourly;
 
-    // Direct booking without Payment Gateway
-    const booking = new Booking({
-      parkingId: parking._id,
-      slots: slots,
-      date: date,
-      time: time,
-      user: req.user.id,
-      amount: amount,
-      paymentId: 'PAY-' + crypto.randomBytes(8).toString('hex'),
-      paymentStatus: 'success',
-    });
-
-    await booking.save();
-
-    // Update available slots
-    await Parking.findByIdAndUpdate(parkingId, { $inc: { availableSlots: -parseInt(slots) } });
-
-    // Render themed booking success page
-    res.render('booking-submitted', { booking });
-
-    /* PayU Integration Commented Out
     const txnid = 'txn' + Date.now();
-    // Use only the parking name as productinfo (plain string, no JSON, no curly braces)
     const productinfo = String(parking.name || 'Parking Slot').trim();
-    const firstname = 'TestUser'; // Replace with logged-in user info if available
-    const email = 'test@example.com';
+    const firstname = (req.user.username || 'User').split(' ')[0];
+    const email = req.user.email || 'test@example.com';
+    const phone = req.user.phoneNumber || '9999999999';
 
-
-    // All user-defined fields (udf1-udf10) must be present, even if empty
-    const udf1 = '';
-    const udf2 = '';
-    const udf3 = '';
-    const udf4 = '';
-    const udf5 = '';
+    // Store booking details in UDFs to retrieve them in the success callback
+    const udf1 = parkingId;
+    const udf2 = slots;
+    const udf3 = date;
+    const udf4 = time;
+    const udf5 = req.user.id;
     const udf6 = '';
     const udf7 = '';
     const udf8 = '';
     const udf9 = '';
     const udf10 = '';
+
     // Hash string: key|txnid|amount|productinfo|firstname|email|udf1|udf2|udf3|udf4|udf5|udf6|udf7|udf8|udf9|udf10|salt
-    // All fields must be string and trimmed, and productinfo must match exactly in hash and form
     const hashString = [
       payuConfig.key,
       txnid,
@@ -85,6 +64,12 @@ router.post('/', requireRole('user'), async (req, res) => {
     ].map(x => (x === undefined || x === null ? '' : String(x))).join('|');
     const hash = crypto.createHash('sha512').update(hashString, 'utf-8').digest('hex');
 
+    // Construct absolute URLs for PayU
+    const protocol = req.protocol;
+    const host = req.get('host');
+    const surl = `${protocol}://${host}${payuConfig.success_url}`;
+    const furl = `${protocol}://${host}${payuConfig.failure_url}`;
+
     // Render PayU payment form (auto-submit)
     res.send(`
       <html><body>
@@ -95,9 +80,9 @@ router.post('/', requireRole('user'), async (req, res) => {
         <input type="hidden" name="productinfo" value="${productinfo}" />
         <input type="hidden" name="firstname" value="${firstname}" />
         <input type="hidden" name="email" value="${email}" />
-        <input type="hidden" name="phone" value="9999999999" />
-        <input type="hidden" name="surl" value="${payuConfig.success_url}" />
-        <input type="hidden" name="furl" value="${payuConfig.failure_url}" />
+        <input type="hidden" name="phone" value="${phone}" />
+        <input type="hidden" name="surl" value="${surl}" />
+        <input type="hidden" name="furl" value="${furl}" />
         <input type="hidden" name="hash" value="${hash}" />
         <input type="hidden" name="udf1" value="${udf1}" />
         <input type="hidden" name="udf2" value="${udf2}" />
@@ -113,55 +98,59 @@ router.post('/', requireRole('user'), async (req, res) => {
       <script>document.getElementById('payuForm').submit();</script>
       </body></html>
     `);
-    */
+
   } catch (err) {
     console.error(err);
     res.status(500).send('Server error');
   }
 });
+*/
 
+// Direct booking bypass for testing/free slots
+router.post('/', requireRole('user'), async (req, res) => {
+  const { parkingId, slots, date, time } = req.body;
+  if (!parkingId || !slots || !date || !time) return res.status(400).send('Missing booking details');
 
-
-/*
-// Save booking after payment success
-const Booking = require('../models/booking');
-
-router.post('/success', async (req, res) => {
-  // PayU will POST payment details here
-  const {
-    mihpayid, status, txnid, amount, productinfo, firstname, email, phone, hash, key, paymentId, parkingId, slots, date, time
-  } = req.body;
-  // For demo, skip hash verification. In production, always verify hash!
   try {
-    // Extract parkingId, slots, date, time from productinfo or custom fields if needed
-    // For demo, just show booking confirmation and save booking
-    // You may want to parse productinfo for details
+    const parking = await Parking.findById(parkingId);
+    if (!parking) return res.status(404).send('Parking not found');
+
+    const amount = parseInt(slots) * parking.pricing.hourly;
+
     const booking = new Booking({
-      parkingId: req.body.parkingId || null,
-      slots: req.body.slots || 1,
-      date: req.body.date || '',
-      time: req.body.time || '',
-      user: firstname || email,
+      parkingId: parkingId,
+      slots: parseInt(slots) || 1,
+      date: date,
+      time: time,
+      user: req.user.id,
       amount: amount,
-      paymentId: mihpayid || txnid,
-      paymentStatus: 'success',
+      paymentId: 'DIRECT-' + Date.now(),
+      paymentStatus: 'pending',
+      status: 'pending'
     });
+
     await booking.save();
-    // Optionally, update available slots
-    if (booking.parkingId) {
-      await Parking.findByIdAndUpdate(booking.parkingId, { $inc: { availableSlots: -parseInt(booking.slots) } });
-    }
+
+    // Update available slots
+    await Parking.findByIdAndUpdate(parkingId, { $inc: { availableSlots: -parseInt(slots) } });
+
     // Render themed booking success page
     return res.render('booking-submitted', { booking });
   } catch (err) {
-    return res.status(500).send('<h2>Payment Successful, but booking failed to save.</h2>');
+    console.error("Booking save error:", err);
+    res.status(500).send('Server error');
   }
 });
 
-// PayU payment failure
+// Save booking after payment success (Unused in direct mode)
+router.post('/success', async (req, res) => {
+  /* ... existing success logic ... */
+});
+
+// PayU payment failure (Unused in direct mode)
 router.post('/failure', (req, res) => {
   res.send('<h2>Payment Failed</h2><p>Your payment was not successful. Please try again.</p>');
 });
-*/
+
 
 module.exports = router;

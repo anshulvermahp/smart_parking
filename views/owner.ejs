@@ -1,118 +1,221 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Owner Registration</title>
-    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;700&display=swap" rel="stylesheet">
+    <title>Owner Registration - Parking.com</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@24.5.0/build/css/intlTelInput.css">
     <style>
-        :root{font-family:'Google Sans', Arial,Helvetica,sans-serif;color:#111}
-        body{margin:0;background:#f5f5f5}
-        .container{max-width:720px;margin:48px auto;padding:28px;border-radius:12px;background:#fff;box-shadow:0 18px 40px rgba(0,0,0,0.08)}
-        h1{margin:0 0 8px;font-size:1.6rem;font-weight:700;color:#000}
-        p.lead{margin:0 0 18px;color:#333}
-        .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-        .full{grid-column:1/-1}
-        label{display:block;margin-bottom:6px;font-weight:700;color:#000;font-size:0.95rem}
-        input[type="text"],input[type="email"],input[type="password"],input[type="file"]{width:100%;padding:10px;border:1px solid #dedede;border-radius:8px;background:#fff;color:#000}
-        .actions{margin-top:18px;display:flex;gap:12px;align-items:center}
-        button{background:#000;border:none;color:#fff;padding:12px 16px;border-radius:8px;cursor:pointer;font-weight:700}
-        button:hover{background:#222}
-        button[disabled]{opacity:.6;cursor:not-allowed}
-        #spinner{color:#444;font-size:0.95rem}
-        #message{margin-top:18px;padding:14px;border-radius:8px;display:none;font-weight:600}
-        #message.success{background:#000;color:#fff;border:1px solid #000}
-        #message.error{background:#fff;color:#000;border:1px solid #000}
-        @media(max-width:600px){.grid{grid-template-columns:1fr}.container{margin:20px;padding:18px}}
+        body {
+            font-family: 'Google Sans', sans-serif;
+            background-color: #f8f9fa;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .navbar {
+            height: 64px;
+            flex-shrink: 0;
+            background: white;
+            border-bottom: 1px solid #e5e5e5;
+            z-index: 1000;
+        }
+
+        .card-custom {
+            background: white;
+            border-radius: 16px;
+            border: 1px solid rgba(0, 0, 0, 0.04);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+            padding: 2.5rem;
+        }
+
+        .form-control {
+            padding: 12px;
+            border-radius: 8px;
+        }
+
+        .form-control:focus {
+            border-color: #212529;
+            box-shadow: 0 0 0 4px rgba(33, 37, 41, 0.1);
+        }
+
+        .btn-black {
+            background: #212529;
+            color: white;
+            border-radius: 8px;
+            padding: 12px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .btn-black:hover {
+            background: black;
+            color: white;
+            transform: translateY(-1px);
+        }
+
+        /* intl-tel-input styling */
+        .iti {
+            width: 100%;
+            display: block;
+        }
+
+        .iti__country-list {
+            z-index: 1050;
+        }
     </style>
 </head>
+
 <body>
-    <div class="container">
-        <h1>Owner Registration</h1>
 
-        <form id="ownerForm" action="/owners/owner_registration" method="POST" enctype="multipart/form-data">
-            <div class="grid">
-                <div>
-                    <label for="ownerName">Owner Name</label>
-                    <input type="text" id="ownerName" name="username" placeholder="Full name" required>
-                </div>
+    <!-- Navbar -->
+    <nav class="navbar px-3 d-flex align-items-center justify-content-between shadow-sm sticky-top">
+        <a class="navbar-brand d-flex align-items-center gap-2" href="/">
+            <i class="bi bi-p-square-fill" style="font-size: 1.8rem;"></i>
+            <span>Parking.com</span>
+        </a>
+        <div class="d-flex gap-3">
+            <a href="/owners/owner_login" class="btn btn-sm btn-outline-dark rounded-pill px-3">
+                Owner Login
+            </a>
+        </div>
+    </nav>
 
-                <div>
-                    <label for="ownerEmail">Email</label>
-                    <input type="email" id="ownerEmail" name="email" placeholder="name@example.com" required>
-                </div>
+    <!-- Register Content -->
+    <div class="container d-flex flex-column justify-content-center flex-grow-1 py-5">
+        <div class="row justify-content-center">
+            <div class="col-12 col-md-10 col-lg-8 col-xl-7">
+                <div class="card-custom">
+                    <div class="text-center mb-4">
+                        <h3 class="fw-bold">Owner Registration</h3>
+                        <p class="text-muted">Register to list and manage your parking spaces</p>
+                    </div>
 
-                <div>
-                    <label for="ownerContactNumber">Contact Number</label>
-                    <input type="text" id="ownerContactNumber" name="contactNumber" placeholder="Mobile or landline" required>
-                </div>
+                    <% if (typeof error !=='undefined' ) { %>
+                        <div class="alert alert-danger" role="alert">
+                            <%= error %>
+                        </div>
+                        <% } %>
 
-                <div>
-                    <label for="ownerPassword">Password</label>
-                    <input type="password" id="ownerPassword" name="password" placeholder="Choose a secure password" required>
-                </div>
+                            <% if (typeof info !=='undefined' ) { %>
+                                <div class="alert alert-info" role="alert">
+                                    <%= info %>
+                                </div>
+                                <% } %>
 
-                <div class="full">
-                    <label for="proofOfOwnership">Proof of Ownership (image/PDF)</label>
-                    <input type="file" id="proofOfOwnership" name="proofOfOwnership" accept="image/*,.pdf" required>
-                </div>
+                                    <form id="ownerForm" action="/owners/owner_registration" method="POST"
+                                        enctype="multipart/form-data">
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label fw-medium">Full Name</label>
+                                                <input type="text" name="username" class="form-control"
+                                                    placeholder="John Doe" required>
+                                            </div>
 
-                <div class="full">
-                    <label for="profilePicture">Profile Picture (optional)</label>
-                    <input type="file" id="profilePicture" name="profilePicture" accept="image/*">
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label fw-medium">Email Address</label>
+                                                <input type="email" name="email" class="form-control"
+                                                    placeholder="name@example.com" required>
+                                            </div>
+
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label fw-medium">Contact Number</label>
+                                                <input type="tel" id="ownerContactNumber" name="contactNumber"
+                                                    class="form-control" placeholder="98765 43210" required>
+                                                <div id="phone-error" class="text-danger small mt-1"
+                                                    style="display: none;">Please enter a valid phone number.</div>
+                                                <input type="hidden" name="fullContactNumber" id="fullContactNumber">
+                                            </div>
+
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label fw-medium">Password</label>
+                                                <input type="password" name="password" class="form-control"
+                                                    placeholder="Choose a secure password" required>
+                                            </div>
+
+                                            <div class="col-12 mb-3">
+                                                <label class="form-label fw-medium">Proof of Ownership
+                                                    (Image/PDF)</label>
+                                                <input type="file" name="proofOfOwnership" class="form-control"
+                                                    accept="image/*,.pdf" required>
+                                                <div class="form-text">Please upload document proving ownership of the
+                                                    parking space.</div>
+                                            </div>
+
+                                            <div class="col-12 mb-4">
+                                                <label class="form-label fw-medium">Profile Picture <span
+                                                        class="text-muted fw-normal small">(Optional)</span></label>
+                                                <input type="file" name="profilePicture" class="form-control"
+                                                    accept="image/*">
+                                            </div>
+
+                                            <div class="col-12 mt-2">
+                                                <button type="submit" class="btn btn-black w-100 mb-3" id="submitBtn">
+                                                    Register as Owner
+                                                </button>
+                                            </div>
+
+                                            <div class="text-center col-12">
+                                                <span class="text-muted small">Already registered as an owner?</span>
+                                                <a href="/owners/owner_login"
+                                                    class="text-decoration-none fw-bold text-dark ms-1">Sign In</a>
+                                            </div>
+                                        </div>
+                                    </form>
                 </div>
             </div>
-
-            <div class="actions">
-                <button type="submit" id="submitBtn">Register</button>
-                <div id="spinner" style="display:none">Submitting…</div>
-            </div>
-        </form>
-
-        <div id="message" role="status" aria-live="polite" style="display:none"></div>
+        </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@24.5.0/build/js/intlTelInput.min.js"></script>
     <script>
-        (function(){
-            const form = document.getElementById('ownerForm');
-            const btn = document.getElementById('submitBtn');
-            const spinner = document.getElementById('spinner');
+        const phoneInput = document.querySelector("#ownerContactNumber");
+        const fullPhoneInput = document.querySelector("#fullContactNumber");
+        const errorMsg = document.querySelector("#phone-error");
+        const form = document.querySelector("#ownerForm");
 
-            form.addEventListener('submit', async function(e){
-                e.preventDefault();
-                btn.disabled = true;
-                spinner.textContent = 'Submitting...';
-                spinner.style.display = '';
+        const iti = window.intlTelInput(phoneInput, {
+            initialCountry: "in",
+            separateDialCode: true,
+            utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@24.5.0/build/js/utils.js",
+        });
 
-                const fd = new FormData(form);
-
-                try{
-                    const resp = await fetch(form.action, {method: form.method || 'POST', body: fd});
-                        if(resp.ok){
-                            // short confirmation then redirect to owner profile
-                            spinner.textContent = 'Submitted — redirecting...';
-                            setTimeout(() => { window.location.href = '/owners/profile'; }, 800);
-                        } else {
-                            const text = await resp.text().catch(()=>'');
-                            showMessage(text || 'Submission failed. Please try again later.', true);
-                            btn.disabled = false;
-                            spinner.style.display = 'none';
-                        }
-                }catch(err){
-                    showMessage('Network error. Please check your connection and try again.', true);
-                    btn.disabled = false;
-                    spinner.style.display = 'none';
+        const handleChange = () => {
+            if (phoneInput.value.trim()) {
+                if (iti.isValidNumber()) {
+                    errorMsg.style.display = "none";
+                    phoneInput.classList.remove("is-invalid");
+                    fullPhoneInput.value = iti.getNumber();
+                } else {
+                    errorMsg.style.display = "block";
+                    phoneInput.classList.add("is-invalid");
                 }
-            });
-
-            function showMessage(text, isError){
-                const msgEl = document.getElementById('message');
-                msgEl.textContent = text;
-                msgEl.className = isError ? 'error' : 'success';
-                msgEl.style.display = '';
+            } else {
+                errorMsg.style.display = "none";
+                phoneInput.classList.remove("is-invalid");
             }
-            });
-        
+        };
+
+        phoneInput.addEventListener('change', handleChange);
+        phoneInput.addEventListener('keyup', handleChange);
+
+        form.addEventListener("submit", (e) => {
+            if (phoneInput.value.trim() && !iti.isValidNumber()) {
+                e.preventDefault();
+                errorMsg.style.display = "block";
+                phoneInput.classList.add("is-invalid");
+                phoneInput.focus();
+            } else {
+                fullPhoneInput.value = iti.getNumber();
+            }
+        });
     </script>
 </body>
+
 </html>

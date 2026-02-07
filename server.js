@@ -1,17 +1,11 @@
 const express = require("express");
+require("dotenv").config();
 const path = require("path");
 const session = require("./config/session");
 const app = express();
 const cookiesParser = require("cookie-parser")
-const { restricToLoggedInUserOnly } = require("./middleware/auth");
-// async function name() {
-//    const Parking = require("./models/parking");
-// const data = require("./parking-demo.json");
+const { setUserContext, restricToLoggedInUserOnly } = require("./middleware/auth");
 
-// await Parking.insertMany(data);
-
-// }
-// name();
 /* =======================
    View Engine
 ======================= */
@@ -25,10 +19,10 @@ app.use(session)
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookiesParser())
+app.use(setUserContext)
 
 // Static files (CSS, JS, images)
 app.use(express.static(path.join(__dirname, "public")));
-require("dotenv").config();
 
 /* =======================
    Database
@@ -51,9 +45,8 @@ const editProfile = require("./routes/editProfile");
 const owners = require("./routes/owners");
 const dashboard = require("./routes/dashboard");
 const viewBooking = require("./routes/viewBooking");
+
 // Public routes
-
-
 app.use("/", homepage);
 app.use("/", register);
 app.use("/", login);
@@ -61,7 +54,7 @@ app.use("/", mapView);
 app.use("/profile", restricToLoggedInUserOnly, userProfile, editProfile);
 
 const bookRoute = require("./routes/book");
-app.use("/book", restricToLoggedInUserOnly, bookRoute  );
+app.use("/book", restricToLoggedInUserOnly, bookRoute);
 app.use("/viewBooking", restricToLoggedInUserOnly, viewBooking);
 app.use("/owners", owners);
 app.use("/dashboard", restricToLoggedInUserOnly, dashboard);

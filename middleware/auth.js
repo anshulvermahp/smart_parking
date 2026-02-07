@@ -1,16 +1,27 @@
 const { getUser } = require("../config/auth");
+const Users = require("../models/register");
+
+async function setUserContext(req, res, next) {
+    const token = req.cookies?.uuid;
+    res.locals.user = null;
+    req.user = null;
+
+    if (token) {
+        const decoded = getUser(token);
+        if (decoded) {
+            req.user = decoded;
+            res.locals.user = decoded;
+        }
+    }
+    // Prevent caching of session-dependent pages
+    res.header('Cache-Control', 'no-cache, private, no-store, must-revalidate, max-stale=0, post-check=0, pre-check=0');
+    next();
+}
 
 async function restricToLoggedInUserOnly(req, res, next) {
-    const token = req.cookies?.uuid;
-    if (!token) {
+    if (!req.user) {
         return res.redirect("/login");
     }
-    const user = getUser(token)
-    if (!user) {
-        return res.redirect("/login")
-    }
-    req.user = user;
-
     next();
 }
 
@@ -48,6 +59,7 @@ function requireAnyRole(roles) {
 
 module.exports =
 {
+    setUserContext,
     restricToLoggedInUserOnly,
     requireRole,
     requireAnyRole

@@ -4,6 +4,7 @@ const { setUser, getUser } = require('../config/auth');
 const mongoose = require('mongoose');
 const fs = require('fs');
 const path = require('path');
+const bcrypt = require('bcrypt');
 
 async function handleOwnersPage(req, res) {
     res.render('owner');
@@ -11,16 +12,17 @@ async function handleOwnersPage(req, res) {
 
 async function handleOwnersData(req, res) {
     const Users = require('../models/register');
-    const { name, username, contactNumber, email } = req.body;
+    const { name, username, contactNumber, fullContactNumber, email } = req.body;
+    const finalContactNumber = fullContactNumber || contactNumber;
 
     // determine uploaded files
     const proofFile = req.files && req.files['proofOfOwnership'] && req.files['proofOfOwnership'][0];
     const profileFile = req.files && req.files['profilePicture'] && req.files['profilePicture'][0];
 
     // minimal validation
-    if (!(name || username)) return res.status(400).send('Name is required');
-    if (!contactNumber) return res.status(400).send('Contact number is required');
-    if (!email) return res.status(400).send('Email is required');
+    if (!(name || username)) return res.status(400).render('owner', { error: 'Name is required' });
+    if (!finalContactNumber) return res.status(400).render('owner', { error: 'Contact number is required' });
+    if (!email) return res.status(400).render('owner', { error: 'Email is required' });
 
     // upload helper
     async function uploadFile(file) {
@@ -51,11 +53,11 @@ async function handleOwnersData(req, res) {
 
     const [proofUrl, profileUrl] = await Promise.all([uploadFile(proofFile), uploadFile(profileFile)]);
 
-    if (!proofUrl) return res.status(400).send('Proof of ownership is required');
+    if (!proofUrl) return res.status(400).render('owner', { error: 'Proof of ownership is required' });
 
     try {
         // prevent duplicate owner entry (check email or contact number)
-        const existingOwner = await ownersData.findOne({ $or: [{ email }, { contactNumber }] }).lean();
+        const existingOwner = await ownersData.findOne({ $or: [{ email }, { contactNumber: finalContactNumber }] }).lean();
         // if user is logged in, link owner to existing user
         const token = req.cookies?.uuid;
         let loggedUser = null;
@@ -76,22 +78,33 @@ async function handleOwnersData(req, res) {
                     const jwtToken = setUser(loggedUser);
                     res.cookie('uuid', jwtToken, { httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000 });
                 }
-                return res.send('Owner profile exists; linked to your account');
+                return res.render('owner-success', { info: 'Owner profile exists; linked to your account' });
             }
 
             const conflicts = [];
             if (existingOwner.email === email) conflicts.push('email');
-            if (existingOwner.contactNumber === contactNumber) conflicts.push('phone number');
+            if (existingOwner.contactNumber === finalContactNumber) conflicts.push('phone number');
             const conflictMsg = conflicts.length ? `Owner profile already registered with this ${conflicts.join(' and ')}` : 'Owner profile already registered';
-            return res.status(409).send(conflictMsg);
+            return res.status(409).render('owner', { error: conflictMsg });
+        }
+
+        // Resolve password: hash new password, or reuse logged-in user's hash
+        let finalPassword = "";
+        if (req.body.password) {
+            finalPassword = await bcrypt.hash(req.body.password, 10);
+        } else if (loggedUser && loggedUser.password) {
+            finalPassword = loggedUser.password;
+        } else {
+            return res.status(400).render('owner', { error: 'Password is required' });
         }
 
         // create owner document
         const ownerPayload = {
             username: (username || name).trim(),
-            contactNumber,
+            contactNumber: finalContactNumber,
             email,
-            password: (loggedUser && loggedUser.password) || req.body.password || '',
+            password: finalPassword,
+
             proofOfOwnership: proofUrl,
             profilePicture: profileUrl
         };
@@ -107,16 +120,16 @@ async function handleOwnersData(req, res) {
             const { setUser } = require('../config/auth');
             const jwtToken = setUser(loggedUser);
             res.cookie('uuid', jwtToken, { httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000 });
-            return res.send('Owner registered and linked to your user account');
+            return res.render('owner-success', { info: 'Owner registered and linked to your user account' });
         }
 
-        return res.send('Owner registered successfully');
+        return res.render('owner-success');
     } catch (error) {
         console.error('Error saving owner data:', error);
         if (error.name === 'ValidationError') {
             return res.status(400).send('Validation error: ' + Object.values(error.errors).map(e => e.message || e.path).join(', '));
         }
-        return res.status(500).send('Server error');
+        return res.status(500).render('owner', { error: 'Server error' });
     }
 }
 async function handleOwnersOrofilePage(req, res) {
@@ -127,20 +140,35 @@ async function handleOwnersOrofilePage(req, res) {
     }
 
     try {
+        const Users = require('../models/register');
         let owner = null;
+        let associatedUser = null;
         if (decoded.id) {
             owner = await ownersData.findById(decoded.id).lean();
         }
         if (!owner && decoded.email) {
             owner = await ownersData.findOne({ email: decoded.email }).lean();
         }
-        if (!owner) {
-            return res.status(404).send('Owner not found');
+
+        // Also try to find the associated user to get their profile picture if needed
+        if (decoded.email) {
+            associatedUser = await Users.findOne({ email: decoded.email }).lean();
+        } else if (owner && owner.email) {
+            associatedUser = await Users.findOne({ email: owner.email }).lean();
         }
+
+        if (!owner) {
+            return res.redirect('/owners/owner_login');
+        }
+
         // compute displayable urls for profile picture and proof
         owner.profileUrl = null;
-        if (owner.profilePicture) {
-            const p = owner.profilePicture.toString();
+        // Preferred: owner document's profile picture
+        // Fallback: associated user's profile picture
+        const pPicture = owner.profilePicture || (associatedUser ? associatedUser.profilePicture : null);
+
+        if (pPicture) {
+            const p = pPicture.toString();
             if (p.startsWith('http') || p.startsWith('/')) owner.profileUrl = p;
             else owner.profileUrl = `/images/${p}`;
         }
@@ -164,12 +192,18 @@ async function handleOwnerLoginPage(req, res) {
 async function handleOwnerLogin(req, res) {
     const { email, password } = req.body;
     if (!email || !password) {
-        return res.status(400).send('Email and password are required');
+        return res.status(400).render('ownerLoging', { error: 'Email and password are required' });
     }
     try {
-        const owner = await ownersData.findOne({ email, password }).lean();
+        const owner = await ownersData.findOne({ email }).lean();
         if (!owner) {
-            return res.status(401).send('Invalid email or password');
+            return res.status(401).render('ownerLoging', { error: 'Invalid email or password' });
+        }
+
+        // Check password
+        const validPassword = await bcrypt.compare(password, owner.password);
+        if (!validPassword) {
+            return res.status(401).render('ownerLoging', { error: 'Invalid email or password' });
         }
         const jwtToken = setUser(owner);
         // use the same cookie name as user login so auth helpers/middleware can decode it
@@ -190,13 +224,25 @@ async function handleOwnerEditPage(req, res) {
     if (!decoded) return res.redirect('/owners/owner_login');
 
     try {
+        const Users = require('../models/register');
         let owner = null;
+        let associatedUser = null;
+
         if (decoded.id) owner = await ownersData.findById(decoded.id).lean();
         if (!owner && decoded.email) owner = await ownersData.findOne({ email: decoded.email }).lean();
+
+        if (decoded.email) {
+            associatedUser = await Users.findOne({ email: decoded.email }).lean();
+        } else if (owner && owner.email) {
+            associatedUser = await Users.findOne({ email: owner.email }).lean();
+        }
+
         if (!owner) return res.status(404).send('Owner not found');
+
         owner.profileUrl = null;
-        if (owner.profilePicture) {
-            const p = owner.profilePicture.toString();
+        const pPicture = owner.profilePicture || (associatedUser ? associatedUser.profilePicture : null);
+        if (pPicture) {
+            const p = pPicture.toString();
             if (p.startsWith('http') || p.startsWith('/')) owner.profileUrl = p;
             else owner.profileUrl = `/images/${p}`;
         }
@@ -223,12 +269,12 @@ async function handleOwnerEditSubmit(req, res) {
         let ownerDoc = null;
         if (decoded.id) ownerDoc = await ownersData.findById(decoded.id);
         if (!ownerDoc && decoded.email) ownerDoc = await ownersData.findOne({ email: decoded.email });
-        if (!ownerDoc) return res.status(404).send('Owner not found');
+        if (!ownerDoc) return res.status(404).render('ownerLoging', { error: 'Owner not found' });
 
-        const { username, email, contactNumber, oldPassword, password } = req.body;
+        const { username, email, contactNumber, fullContactNumber, oldPassword, password } = req.body;
         if (username) ownerDoc.username = username.trim();
         if (email) ownerDoc.email = email;
-        if (contactNumber) ownerDoc.contactNumber = contactNumber;
+        if (fullContactNumber || contactNumber) ownerDoc.contactNumber = fullContactNumber || contactNumber;
 
         // handle uploaded files (proofOfOwnership and profilePicture)
         const proofFile = req.files && req.files['proofOfOwnership'] && req.files['proofOfOwnership'][0];
@@ -290,16 +336,19 @@ async function handleOwnerEditSubmit(req, res) {
 
         // password change: require current password
         if (password) {
-            if (!oldPassword) return res.status(400).send('Current password required to change password');
-            if (oldPassword !== ownerDoc.password) return res.status(401).send('Current password incorrect');
-            ownerDoc.password = password;
+            if (!oldPassword) return res.status(400).render('editOwner', { owner: ownerDoc, error: 'Current password required to change password' });
+
+            const isMatch = await bcrypt.compare(oldPassword, ownerDoc.password);
+            if (!isMatch) return res.status(401).render('editOwner', { owner: ownerDoc, error: 'Current password incorrect' });
+
+            ownerDoc.password = await bcrypt.hash(password, 10);
         }
 
         await ownerDoc.save();
         return res.redirect('/owners/profile');
     } catch (err) {
         console.error('Error updating owner profile:', err);
-        return res.status(500).send('Server error');
+        return res.status(500).render('editOwner', { owner: ownerDoc, error: 'Server error during update' });
     }
 }
 module.exports = {

@@ -1,5 +1,6 @@
 const users = require("../models/register")
 const { setUser } = require("../config/auth");
+const bcrypt = require("bcrypt");
 async function loginHandler(req, res) {
 
     let { email, password } = req.body
@@ -7,13 +8,16 @@ async function loginHandler(req, res) {
 
 
     if (!email || !password) {
-        return res.status(400).send('Email and password are required');
+        return res.status(400).render('login', { error: 'Email and password are required', next: req.body.next || '' });
     }
     try {
         try {
 
-            const userdata = await users.findOne({ email, password });
-            if (!userdata) return res.status(401).send('Invalid credentials');
+            const userdata = await users.findOne({ email });
+            if (!userdata) return res.status(401).render('login', { error: 'Invalid credentials', next: req.body.next || '' });
+
+            const isMatch = await bcrypt.compare(password, userdata.password);
+            if (!isMatch) return res.status(401).render('login', { error: 'Invalid credentials', next: req.body.next || '' });
 
             const jwtToken = setUser(userdata);
             // set cookie with httpOnly and 7 day expiry
@@ -23,7 +27,7 @@ async function loginHandler(req, res) {
             return res.redirect(redirectTo);
         } catch (error) {
             console.log('Login error:', error);
-            return res.status(500).send('Something went wrong, please try again later');
+            return res.status(500).render('login', { error: 'Something went wrong, please try again later', next: req.body.next || '' });
         }
 
 
@@ -31,7 +35,7 @@ async function loginHandler(req, res) {
     }
     catch (error) {
         console.error("Unexpected error during login:", error)
-        return res.status(500).send("Unexpected server error")
+        return res.status(500).render('login', { error: "Unexpected server error", next: req.body.next || '' });
     }
 
 }

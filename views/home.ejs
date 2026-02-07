@@ -499,7 +499,7 @@
               </a>
 
               <% if ((user.roles && user.roles.includes('owner')) || user.owner) { %>
-                <a href="/owner/dashboard" class="btn btn-outline-dark rounded-pill px-4 fw-bold nav-btn">
+                <a href="/dashboard" class="btn btn-outline-dark rounded-pill px-4 fw-bold nav-btn">
                   Owner Dashboard
                 </a>
                 <a href="/owners/profile" class="btn btn-outline-dark rounded-pill px-4 fw-bold nav-btn">
@@ -512,8 +512,8 @@
               <% } %>
 
                     <% } else { %>
-                      <a href="/login" class="btn btn-link text-decoration-none fw-semibold nav-btn">Log in</a>
-                      <a href="/register" class="btn btn-signup-nav rounded-pill px-4 fw-bold nav-btn shadow-sm">Sign
+                      <a href="/login" class="btn btn-outline-dark rounded-pill px-4 fw-bold nav-btn">Log in</a>
+                      <a href="/register" class="btn btn-outline-dark rounded-pill px-4 fw-bold nav-btn">Sign
                         up</a>
                       <a href="/owners/owner_registration"
                         class="btn btn-outline-dark rounded-pill px-4 fw-bold nav-btn">List Parking</a>
