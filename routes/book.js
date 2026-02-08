@@ -19,7 +19,7 @@ router.get('/', requireRole('user'), async (req, res) => {
 
 
 // PayU integration (Commented out for direct booking)
-/*
+
 const crypto = require('crypto');
 const payuConfig = require('../config/payu');
 
@@ -104,7 +104,7 @@ router.post('/', requireRole('user'), async (req, res) => {
     res.status(500).send('Server error');
   }
 });
-*/
+
 
 // Direct booking bypass for testing/free slots
 router.post('/', requireRole('user'), async (req, res) => {
